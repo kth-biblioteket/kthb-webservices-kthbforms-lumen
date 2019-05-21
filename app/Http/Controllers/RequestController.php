@@ -184,7 +184,7 @@ class RequestController extends Controller
         //return response()->json($request, 400);
 
         switch($request->input('form.source')) {
-            case 'info:sid/libris.kb.se:libris';  
+            case 'info:sid/libris.kb.se:libris':
                 $almarequest =  Alma::createUserResourceSharingRequests($formconfig, $request, $request->all(), $citation_type, $format, $request->input('form.username'), 'true');
                 $almarequestobject = json_decode($almarequest);
                 if ($almarequestobject->status == 'Error') {
@@ -200,7 +200,8 @@ class RequestController extends Controller
                     return response()->json($responseobject, 202);
                 }
                 break;
-            case 'primo';
+            case 'LeanLibrary':    
+            case 'primo':
                 if ($request->input('form.genre') == 'journal') {
                     $mailresponse = Mail::sendemail($emailtoaddressedge, $almapreferredemail, $almafullname, $emailtosubjectedge, $emailtobodyedge);
                     if ($mailresponse != 'Success'){
@@ -227,7 +228,7 @@ class RequestController extends Controller
                     }
                 }
                 break;
-            case 'kthbforms';
+            case 'kthbforms':
                 if ($request->input('form.genre') == 'journal' || $request->input('form.genre') == 'database') {
                     $mailresponse = Mail::sendemail($emailtoaddressedge, $almapreferredemail, $almafullname, $emailtosubjectedge, $emailtobodyedge);
                     if ($mailresponse != 'Success'){
