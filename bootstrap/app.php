@@ -52,7 +52,6 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
-
 // fix `BindingResolutionException` problem
 /*
 $app->bind(Illuminate\Session\SessionManager::class, function ($app) {    

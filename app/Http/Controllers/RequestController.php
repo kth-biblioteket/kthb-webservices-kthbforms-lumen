@@ -9,6 +9,7 @@ use DB;
 use App\Classes\Alma;
 use App\Classes\Mail;
 use App\Classes\Formsconfig;
+use Illuminate\Support\Facades\Log;
 
 //TODO
 class RequestController extends Controller
@@ -241,7 +242,8 @@ class RequestController extends Controller
                 } else {
                     $almarequest =  Alma::createUserResourceSharingRequests($formconfig, $request, $request->all(), $citation_type, $format, $request->input('form.username'), 'true');
                     $almarequestobject = json_decode($almarequest);
-                    if ($almarequestobject->status == 'Error') {
+                    //Log::info(print_r($almarequestobject, true));
+                    if (isset($almarequestobject->status) && $almarequestobject->status == 'Error') {
                         /*
                         if(strpos($almarequestobject->message,'Patron has duplicate') !== false) {
                             if ($request->input('language') == 'swedish') {

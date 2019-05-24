@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -10,11 +9,11 @@ use DB;
 use App\Classes\Mail;
 use App\Classes\Formsconfig;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 //TODO Validera inkommande data för create/update/delete
 class SiyssController extends Controller
 {
-
     /**
      * Create a new controller instance.
      *
@@ -35,8 +34,8 @@ class SiyssController extends Controller
 
     /**
      * 
-     * Funktion som skickar Kontakta oss-mail
-     * till RT/EDGE funktionsmail
+     * Funktion som skickar Siyss-mail
+     * till RT/EDGE funktionsmail?
      * 
      * Formulärkonfig från JSON
      *      Mailadresser och texter
@@ -44,39 +43,26 @@ class SiyssController extends Controller
      * Byt ut variabler (@@XXXX) i mailtexten som hämtats från formulärkonfig
      * mot värden från request
      * 
+     * requestobject inte json då det innehåller bifogade/uppladdade filer som ska inkluderas i mailet till EDGE
      */
     public function sendSiyssMail(Request $request)
-    {
-        if (!$request->isJson()) {
-            $responseobject = array(
-                "status"  => "Error",
-                "message" => "Please provide json"
-            );
-            return response()->json($responseobject, 203);
-        }
-        
+    {   
         $formconfig = Formsconfig::get_form('siyss');
 
         $language = "english";
         if($request->input('language')) {
             $language = $request->input('language');
         }
-        /*
-        $validationarray = array('language' => 'required');
-        foreach ($formconfig->formfields as $field => $val) {
-            if ($val->validation->required->value && $val->type != 'grouplabel') {
-                $validationarray["form.".$field] = 'required';
-            }
-        }
-        $this->validate($request, $validationarray);
-        */
+
+        /* TODO Validering av fält? */
+        
         $emailtoaddressedge = $formconfig->emailtoaddressedge->emailaddress;
-        $emailfromaddressuser = $request->input('form.email');
-        $emailfromnameuser = $request->input('form.name');                                   
+        $emailfromaddressuser = $request->input('email');
+        $emailfromnameuser = $request->input('name');                                   
 
         try {
             $bodytext = "";
-            $emailtosubjectedge = "Anmälan Siyss";
+            $emailtosubjectedge = $formconfig->emailtosubjectedge->{$language};
             foreach ($formconfig->emailtobodyedge->{$language} as $row) {
                 $bodytext .= $row;
             }
@@ -88,19 +74,22 @@ class SiyssController extends Controller
             );
             return response()->json($responseobject, 400);
         }
-
-        //$avatar = $request->file('form.files');
-        Log::Debug($request->get('form.files'));
-        //file_put_contents("test.pdf",$request->get('form.files'));
-
+        
         foreach ($formconfig->formfields as $field => $val) {
-            if($field != 'files' && $field != 'file1') {
-                $bodytext = str_replace('@@'. $field, $request->input('form.' . $field), $bodytext);
+            //hantera true/false-fält (checkbox)
+            if($val->type == 'checkbox' ) {
+                // Log::Debug($val->type);
+                if($request->input($field)=='true') {
+                    $bodytext = str_replace('@@'. $field, 'Ja', $bodytext);
+                } else {
+                    $bodytext = str_replace('@@'. $field, 'Nej', $bodytext);
+                }
+            } else {
+                $bodytext = str_replace('@@'. $field, $request->input($field), $bodytext);
             }
         }
 
-        //$mailresponse = Mail::sendemail($emailtoaddressedge, $emailfromaddressuser, $emailfromnameuser, $emailtosubjectedge , $bodytext);
-        $mailresponse = Mail::sendemail($emailtoaddressedge, "noreply@kth.se", $emailfromnameuser, $emailtosubjectedge , $bodytext);
+        $mailresponse = Mail::siyssmail($emailtoaddressedge, $emailfromaddressuser, $emailfromnameuser, $emailtosubjectedge , $bodytext,'','', $request);
         
         if ($mailresponse != 'Success'){
             $responseobject = array(
@@ -116,59 +105,5 @@ class SiyssController extends Controller
         );
         return response()->json($responseobject, 200,[],JSON_UNESCAPED_UNICODE); 
     }
-
-    public function index(Request $request)
-    {
-        $contact = DB::table('contact');
-              
-        if($request->input('limit')){
-            $limit = $request->input('limit');
-        } else {
-            $limit = 50;
-        }
-        if (is_numeric($limit)){
-            return response()->json($contact->take($limit)->get());
-        } else {
-            //return response()->json($systemlog->paginate(2000));
-            return response()->json($contact->get());
-        } 
-    }
-
-    public function getContact($id)
-    {   
-        if (is_numeric($id))
-        {
-            $contact = Contact::find($id);
-        }
-        else
-        {
-            return response()->json('id måste vara numeriskt');    
-        }
-        return response()->json($contact);
-    }
-
-    public function createContact(Request $request)
-    {
-        $this->validate($request, [                        
-        ]);
-
-        $contact = Contact::create($request->all());
-        return response()->json($contact, 201);
-    }
-
-    public function updateContact(Request $request, $id)
-    {
-        $contact = Contact::find($id);
-        $contact->save();
-        return response()->json($contact);   
-    }
-
-    public function deleteContact($id)
-    {
-        $contact = Contact::find($id);
-        $contact->delete();
-        return response()->json('deleted');
-    }
-   
 }
 ?>

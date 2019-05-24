@@ -13,7 +13,6 @@ use App\Classes\Formsconfig;
 //TODO Validera inkommande data för create/update/delete
 class TeachingactivityController extends Controller
 {
-
     /**
      * Create a new controller instance.
      *
