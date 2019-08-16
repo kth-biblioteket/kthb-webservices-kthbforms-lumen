@@ -3,7 +3,7 @@ Api för KTH Bibliotekets Formulär
 
 ## Funktioner
 
-### Används för xx
+### Används för xxxx
 
 ### Anrop till Api kräver JWT-token för autentisering(erhålls via login mot KTH), eller api_key
 
