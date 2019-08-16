@@ -40,14 +40,13 @@ class Mail
             $mail->Host = "smtp.kth.se";
             $mail->SMTPAuth   = FALSE;
             $mail->SMTPSecure = "tls";
-        
             $mail->CharSet = 'UTF-8';
             $mail->From      = $from;
             $mail->FromName  = $fromname;
             $mail->Subject   = $subject;
             $mail->Body = $bodytext;
             $mail->IsHTML(true);
-            //$mail->msgHTML($bodytext);
+            
             $addresses = explode(",",$to);
             
             if(!empty($addresses)){

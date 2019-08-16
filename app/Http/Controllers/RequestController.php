@@ -125,7 +125,7 @@ class RequestController extends Controller
 
             $genre = $formconfig->genrenames->{$request->input('form.genre')}->{$request->input('language')};
 
-            //hantera kostnader(costsbooks, costsarticles etc, TODO ändra till generell costs?)
+            //hantera kostnader som behöver accepteras/avböjas (TODO ändra till generell costs?)
             $cost="";
             
             $requestInput = $request->all();
@@ -137,7 +137,7 @@ class RequestController extends Controller
                         }
                     }
                 }
-                if($score == 'contact') {
+                if($score == 'contact' || $score == 'decline') {
                     foreach($formconfig->formfields->{$key}->options as $option){
                         if ($option->value == $score) {
                             $cost = $option->label->{$request->input('language')};
