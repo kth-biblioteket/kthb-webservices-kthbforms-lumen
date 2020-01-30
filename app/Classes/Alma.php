@@ -301,8 +301,14 @@ class Alma
                 $title = $request->input('form.btitle');
             }
 
+            if(($request->input('form.genre') == 'proceeding') 
+            &&  !empty($request->input('form.ctitle'))) {
+                $title = $request->input('form.ctitle');
+            }
+
             if(($request->input('form.genre') == 'journal' 
-            || $request->input('form.genre') == 'article') 
+            || $request->input('form.genre') == 'article' 
+            || $request->input('form.genre') == 'proceeding') 
             &&  !empty($request->input('form.jtitle'))) {
                 $journaltitle = $request->input('form.jtitle');
             }
