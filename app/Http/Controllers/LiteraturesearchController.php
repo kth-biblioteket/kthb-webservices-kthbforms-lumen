@@ -3,7 +3,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Symfony\Component\HttpFoundation\Response;
-use App\Contact;
+use App\Consultation;
 use Illuminate\Support\Facades\View;
 use DB; 
 use App\Classes\Mail;
@@ -12,60 +12,59 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 
 //TODO Validera inkommande data för create/update/delete
-class SiyssController extends Controller
+class LiteraturesearchController extends Controller
 {
+
     /**
      * Create a new controller instance.
      *
      * @return void
      */
-    
 
     public function __construct()
     {
-        //definiera vilka anrop som behöver nyckel/autentisering
-        //createLogEntry
         $this->middleware('auth', ['only' => [
-            '', 'getSiyss',  'createSiyss', 'updateSiyss', 'deleteSiyss'
+            ''
         ]]);
-        //Skicka alla anrop till middleware som sätter locale utifrån parameter/header
         $this->middleware('localization');
     }
 
     /**
      * 
-     * Funktion som skickar Siyss-mail
-     * till RT/EDGE funktionsmail?
+     * Funktion som skickar ett mail till
+     * RT/EDGE/Funktionsadress
      * 
      * Formulärkonfig från JSON
      *      Mailadresser och texter
      * 
      * Byt ut variabler (@@XXXX) i mailtexten som hämtats från formulärkonfig
      * mot värden från request
-     * 
-     * requestobject inte json då det innehåller bifogade/uppladdade filer som ska inkluderas i mailet till EDGE
      */
-    public function sendSiyssMail(Request $request)
-    {   
-        $formconfig = Formsconfig::get_form('siyss');
+    public function sendLiteraturesearchMail(Request $request)
+    {
+        $formconfig = Formsconfig::get_form('literaturesearch');
+        /*
+        $this->validate($request, [ 
+            'form.name' => 'required',
+            'form.email' => 'required',
+            'form.subject' => 'required',
+            'form.suggesteddate1' => 'required',
+            'form.suggesteddate2' => 'required',
+            'form.suggesteddate3' => 'required'
+        ]);
+        */
 
         $form  = json_decode($request->input('item'));
-
-        $language = "english";
-        if($request->input('language')) {
-            $language = $request->input('language');
-        }
-
-        /* TODO Validering av fält? */
+        //Log::Debug(json_decode($request->input('item')));
 
         $emailtoaddressedge = $formconfig->emailtoaddressedge->emailaddress;
         $emailfromaddressuser = $form->email;
-        $emailfromnameuser = $form->name;                                  
+        $emailfromnameuser = $form->name;                                 
 
         try {
             $bodytext = "";
-            $emailtosubjectedge = $formconfig->emailtosubjectedge->{$language};
-            foreach ($formconfig->emailtobodyedge->{$language} as $row) {
+            $emailtosubjectedge = $formconfig->emailtosubjectedge->{$request->input('language')};
+            foreach ($formconfig->emailtobodyedge->{$request->input('language')} as $row) {
                 $bodytext .= $row;
             }
         } 
@@ -76,27 +75,29 @@ class SiyssController extends Controller
             );
             return response()->json($responseobject, 400);
         }
-        
+
+        //dynamiska fält...
         foreach ($formconfig->formfields as $field => $val) {
-            //Log::Debug($form->$field);
-            //hantera true/false-fält (checkbox)
-            if($val->type == 'checkbox' ) {
-                
-                if($form->$field=='true') {
-                    $bodytext = str_replace('@@'. $field, 'Ja', $bodytext);
-                } else {
-                    $bodytext = str_replace('@@'. $field, 'Nej', $bodytext);
-                }
-                
+            //$bodytext = str_replace('@@'. $field, $request->input('form.' . $field), $bodytext);
+            //Hantera inte files här!
+            if(strpos($field,'file') !== false) {
+                // Do nothing!
             } else {
-                if($field != 'files' ) {
+                if (is_object($form->$field)) {
+                    //endast datum är object? Files också
+                    $bodytext = str_replace('@@'. $field, $form->$field->formatted, $bodytext);
+                } else {
                     $bodytext = str_replace('@@'. $field, $form->$field, $bodytext);
                 }
             }
-            
         }
-        $mailresponse = Mail::siyssmail($emailtoaddressedge, $emailfromaddressuser, $emailfromnameuser, $emailtosubjectedge , $bodytext,'','', $request);
+
+        //Visa inte rader/rubriker/block där information saknas.
+        if (strpos($bodytext,'showcritera=\'\'')!= false) {
+            $bodytext = str_replace('showcritera=\'\'', 'style="mso-hide:all;display:none;max-height:0px;overflow:hidden;"', $bodytext);
+        }
         
+        $mailresponse = Mail::sendemailwithattachments($emailtoaddressedge, $emailfromaddressuser, $emailfromnameuser, $emailtosubjectedge , $bodytext,'','', $request);
         if ($mailresponse != 'Success'){
             $responseobject = array(
                 "status"  => "Error",
@@ -111,5 +112,6 @@ class SiyssController extends Controller
         );
         return response()->json($responseobject, 200,[],JSON_UNESCAPED_UNICODE); 
     }
+ 
 }
 ?>

@@ -33,6 +33,9 @@ $router->group(['prefix' => 'api/v1/'], function ($router) {
     //Consultation 
     $router->post('consultation','ConsultationController@sendConsultationMail');
 
+    //Literature serach 
+    $router->post('literaturesearch','LiteraturesearchController@sendLiteraturesearchMail');
+
     //Teachingactivity 
     $router->post('teachingactivity','TeachingactivityController@sendTeachingactivityMail');
 
@@ -40,8 +43,8 @@ $router->group(['prefix' => 'api/v1/'], function ($router) {
     $router->post('libraryaccount','LibraryaccountController@createLibraryaccount');
     $router->post('activatelibraryaccount','LibraryaccountController@activateLibraryaccount');
 
-     //Siyss
-     $router->post('siyss','SiyssController@sendSiyssMail');
+    //Siyss
+    $router->post('siyss','SiyssController@sendSiyssMail');
 
 });
 // /orders?sort=-created_at
